@@ -1,0 +1,14 @@
+{
+    "applications": {
+        "_default": {
+            "link": "glimmer"
+        }, 
+        "glimmer": {
+            "applicationId": "dMQSwv9U10sXN3HGbtIiVZ0LK1YRbIQGnI0mKiup", 
+            "masterKey": "bTnZjhNQBtAlNxUcJw3DbzxIkIa3rJyM8219C7wV"
+        }
+    }, 
+    "global": {
+        "parseVersion": "1.2.8"
+    }
+}
