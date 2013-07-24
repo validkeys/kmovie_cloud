@@ -58,3 +58,51 @@ Parse.Cloud.beforeSave "Player", (request, response) ->
 			complete[key] = true
 
 		checkForComplete()
+
+
+
+# ---------------------------
+# AFTER SAVE
+# ---------------------------
+
+Parse.Cloud.afterSave "Player", (request) ->
+
+	if request.object.existed() is false
+
+		player = request.object
+
+		# Find the game initiator
+		
+		Game = Parse.Object.extend("Game")
+		query = new Parse.Query(Game)
+
+		query.equalTo "objectId", player.get("game").objectId
+		query.select "initiator"
+
+
+
+		query.first
+			success: (initiator) =>
+
+				console.log "\n\n----------------"
+				console.log initiator
+				console.log "\n\n----------------"
+
+				# SET ACLS
+				groupACL = new Parse.ACL()
+				groupACL.setReadAccess request.object.get("player"), true
+				groupACL.setWriteAccess request.object.get("player"), true
+				groupACL.setReadAccess initiator.get("initiator"), true
+				groupACL.setWriteAccess initiator.get("initiator"), true
+
+				groupACL.setPublicReadAccess(true)
+
+				player.setACL groupACL
+				player.save()		
+
+
+
+			error: (error) ->
+				console.log "\n\n ERROR finding game initiator: " + error.code + " : " + error.message
+				console.log "Player objectId: " + player.get("objectId")
+
