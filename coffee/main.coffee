@@ -8,8 +8,26 @@ _ = require 'underscore'
 require 'cloud/games/triggers/triggers.js'
 require 'cloud/games/oneonone/create.js'
 
+
+# // ++++++++++++++++++
+# // MEDIA REQUIRES
+# // ++++++++++++++++++
+
+
 require 'cloud/media/triggers/triggers.js'
+
+
+# // ++++++++++++++++++
+# // MOVE REQUIRES
+# // ++++++++++++++++++
+
 require 'cloud/move/triggers/triggers.js'
+
+# // ++++++++++++++++++
+# // PLAYER REQUIRES
+# // ++++++++++++++++++
+
+require 'cloud/player/triggers/triggers.js'
 
 
 Parse.Cloud.beforeSave "Friend", (request, response) ->

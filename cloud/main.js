@@ -12,6 +12,8 @@ require('cloud/media/triggers/triggers.js');
 
 require('cloud/move/triggers/triggers.js');
 
+require('cloud/player/triggers/triggers.js');
+
 Parse.Cloud.beforeSave("Friend", function(request, response) {
   var friend, mainQuery, meQuery, themQuery;
   if (request.object.existed() === false) {
