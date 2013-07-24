@@ -2,6 +2,8 @@ var _;
 
 _ = require('underscore');
 
+Parse.Cloud.useMasterKey();
+
 Parse.Cloud.afterSave("Media", function(request) {
   var media, postACL;
   if (request.object.existed() === false) {

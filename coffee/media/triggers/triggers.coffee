@@ -1,4 +1,5 @@
 _ = require 'underscore'
+Parse.Cloud.useMasterKey()
 
 Parse.Cloud.afterSave "Media", (request) ->
 

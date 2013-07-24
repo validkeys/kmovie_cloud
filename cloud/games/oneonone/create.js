@@ -35,6 +35,10 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
           var media;
           if (results === undefined || results.length === 0) {
             media = new objs.Media(media_data);
+            media.set("imported", false);
+            console.log("\n\n=========================\n\n");
+            console.log(media.toJSON());
+            console.log("\n\n=========================\n\n");
             return media.save(null, {
               success: function(media) {
                 m.set("media", returnMediaPointer(media));
