@@ -59,19 +59,19 @@ Parse.Cloud.afterSave("Player", function(request) {
     query.equalTo("objectId", player.get("game").objectId);
     query.select("initiator");
     return query.first({
-      success: function(initiator) {
-        var groupACL;
-        console.log("\n\n----------------");
-        console.log(initiator);
-        console.log("\n\n----------------");
+      success: function(game) {
+        var groupACL, relation;
         groupACL = new Parse.ACL();
         groupACL.setReadAccess(request.object.get("player"), true);
         groupACL.setWriteAccess(request.object.get("player"), true);
-        groupACL.setReadAccess(initiator.get("initiator"), true);
-        groupACL.setWriteAccess(initiator.get("initiator"), true);
+        groupACL.setReadAccess(game.get("initiator"), true);
+        groupACL.setWriteAccess(game.get("initiator"), true);
         groupACL.setPublicReadAccess(true);
         player.setACL(groupACL);
-        return player.save();
+        player.save();
+        relation = game.relation("friends");
+        relation.add(player);
+        return game.save();
       },
       error: function(error) {
         console.log("\n\n ERROR finding game initiator: " + error.code + " : " + error.message);

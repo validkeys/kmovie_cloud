@@ -44,6 +44,7 @@ Parse.Cloud.afterSave("Game", function(request) {
   var game, groupACL;
   if (request.object.existed() === false) {
     game = request.object;
+    game.set("active", true);
     groupACL = new Parse.ACL();
     groupACL.setReadAccess(request.object.get("initiator"), true);
     groupACL.setWriteAccess(request.object.get("initiator"), true);

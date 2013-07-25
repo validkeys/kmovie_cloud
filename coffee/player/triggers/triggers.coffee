@@ -71,6 +71,11 @@ Parse.Cloud.afterSave "Player", (request) ->
 
 		player = request.object
 
+
+		# ------------------
+		# SET ACLs
+		# ------------------
+
 		# Find the game initiator
 		
 		Game = Parse.Object.extend("Game")
@@ -82,24 +87,28 @@ Parse.Cloud.afterSave "Player", (request) ->
 
 
 		query.first
-			success: (initiator) =>
-
-				console.log "\n\n----------------"
-				console.log initiator
-				console.log "\n\n----------------"
+			success: (game) =>
 
 				# SET ACLS
 				groupACL = new Parse.ACL()
 				groupACL.setReadAccess request.object.get("player"), true
 				groupACL.setWriteAccess request.object.get("player"), true
-				groupACL.setReadAccess initiator.get("initiator"), true
-				groupACL.setWriteAccess initiator.get("initiator"), true
+				groupACL.setReadAccess game.get("initiator"), true
+				groupACL.setWriteAccess game.get("initiator"), true
 
 				groupACL.setPublicReadAccess(true)
 
 				player.setACL groupACL
 				player.save()		
 
+
+				# ---------------------------
+				# ADD PLAYER RELATION TO GAME
+				# ---------------------------
+
+				relation = game.relation("friends")
+				relation.add(player)
+				game.save()
 
 
 			error: (error) ->

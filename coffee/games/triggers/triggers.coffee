@@ -28,6 +28,7 @@ Parse.Cloud.beforeSave "Game", (request, response) ->
 
 	if request.object.existed() is false
 
+
 		errors = false
 
 
@@ -106,6 +107,8 @@ Parse.Cloud.afterSave "Game", (request) ->
 	if request.object.existed() is false	
 
 		game = request.object
+		game.set "active", true		
+
 
 		# SET ACLS
 		groupACL = new Parse.ACL()
