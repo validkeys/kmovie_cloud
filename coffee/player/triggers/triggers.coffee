@@ -106,9 +106,27 @@ Parse.Cloud.afterSave "Player", (request) ->
 				# ADD PLAYER RELATION TO GAME
 				# ---------------------------
 
-				relation = game.relation("friends")
+				relation = game.relation("players")
 				relation.add(player)
 				game.save()
+
+
+				# ---------------------------
+				# ADD GAME RELATION TO PLAYER USER
+				# ---------------------------
+				# console.log "=============================="
+				# console.log "Game relation..."
+				# console.log "---------------------"
+				# console.log player
+				# console.log "-----------------------"
+				# console.log player.toJSON().player.objectId
+				# console.log "=============================="
+				userObj = Parse.Object.extend("_User")
+				user = new userObj()
+				user.set "objectId", player.toJSON().player.objectId
+				user_relation = user.relation("games")
+				user_relation.add(game)
+				user.save()
 
 
 			error: (error) ->

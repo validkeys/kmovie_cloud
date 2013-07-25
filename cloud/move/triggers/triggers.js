@@ -2,6 +2,8 @@ var _;
 
 _ = require('underscore');
 
+Parse.Cloud.useMasterKey();
+
 Parse.Cloud.beforeSave("Move", function(request, response) {
   var Move, checkForComplete, complete, errors, media_type, media_types, query;
   complete = {
@@ -18,10 +20,13 @@ Parse.Cloud.beforeSave("Move", function(request, response) {
   query = new Parse.Query(Move);
   query.equalTo("round", request.object.get("round"));
   query.equalTo("user", request.object.get("user"));
+  if (request.object.existed() === true) {
+    query.notEqualTo("objectId", request.object.objectId);
+  }
   query.find({
     success: function(results) {
       if (results === void 0 || results.length > 0) {
-        throw "user exists!!";
+        throw "user has already made a move this round";
         response.error("User has already made a move this round");
         complete.uniquemove = false;
         errors = true;
@@ -41,4 +46,19 @@ Parse.Cloud.beforeSave("Move", function(request, response) {
       }
     }
   };
+});
+
+Parse.Cloud.afterSave("Move", function(request) {
+  var groupACL, move;
+  if (request.object.existed() === false) {
+    move = request.object;
+    console.log("\n\n--------- ACL ------------");
+    console.log(move);
+    groupACL = new Parse.ACL();
+    groupACL.setReadAccess(move.get("user"), true);
+    groupACL.setWriteAccess(move.get("user"), true);
+    groupACL.setPublicReadAccess(true);
+    move.setACL(groupACL);
+    return move.save();
+  }
 });

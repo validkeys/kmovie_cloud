@@ -1,4 +1,5 @@
 _ = require 'underscore'
+Parse.Cloud.useMasterKey()
 
 Parse.Cloud.beforeSave "Move", (request, response) ->
 
@@ -31,10 +32,13 @@ Parse.Cloud.beforeSave "Move", (request, response) ->
 	query.equalTo "round", 	request.object.get("round")
 	query.equalTo "user", 	request.object.get("user")
 
+	if request.object.existed() is true
+		query.notEqualTo "objectId", request.object.objectId
+
 	query.find
 		success: (results) ->
 			if results is undefined or results.length > 0
-				throw "user exists!!"
+				throw "user has already made a move this round"
 				response.error "User has already made a move this round"
 				complete.uniquemove = false
 				errors = true
@@ -52,3 +56,26 @@ Parse.Cloud.beforeSave "Move", (request, response) ->
 		if complete.uniquemove is true
 			if errors is false
 				response.success()
+
+
+# ---------------------------
+# AFTER SAVE
+# ---------------------------
+
+Parse.Cloud.afterSave "Move", (request) ->
+
+	if request.object.existed() is false
+
+		move = request.object
+
+		console.log "\n\n--------- ACL ------------"
+		console.log move
+
+		# SET ACLS
+		groupACL = new Parse.ACL()
+		groupACL.setReadAccess(move.get("user"), true)
+		groupACL.setWriteAccess(move.get("user"), true)
+		groupACL.setPublicReadAccess(true)
+
+		move.setACL groupACL
+		move.save()
