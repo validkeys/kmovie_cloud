@@ -10,6 +10,13 @@ require 'cloud/games/oneonone/create.js'
 
 
 # // ++++++++++++++++++
+# // ROUND REQUIRES
+# // ++++++++++++++++++
+
+require 'cloud/round/triggers/triggers.js'
+
+
+# // ++++++++++++++++++
 # // MEDIA REQUIRES
 # // ++++++++++++++++++
 
