@@ -1,4 +1,4 @@
-var currentUser, gameIds, gamesList, getGamesList, getRounds, init, loadGames, loadPlayers, manifest, mergePlayerData, models, payload;
+var currentUser, gameIds, gamePointers, gamesList, getGamesList, init, loadGames, loadMoves, loadPlayers, loadRounds, manifest, mergePlayerData, mergeRoundsAndMoves, models, payload;
 
 models = {};
 
@@ -8,6 +8,8 @@ gamesList = [];
 
 gameIds = [];
 
+gamePointers = [];
+
 payload = {};
 
 manifest = [];
@@ -15,201 +17,226 @@ manifest = [];
 init = function() {
   models.Player = Parse.Object.extend("Player");
   models.Game = Parse.Object.extend("Game");
+  models.Round = Parse.Object.extend("Round");
+  models.Move = Parse.Object.extend("Move");
   currentUser = {
     __type: "Pointer",
     className: "_User",
     objectId: "C21b7TAQBB"
   };
-  return $.when(getGamesList()).then(function(results) {
+  return Parse.Promise.when(getGamesList()).then(function(results) {
     console.log("getGamesList complete");
-    return $.when(loadGames()).then(function(results) {
+    _.each(gamesList, function(el) {
+      var tmp;
+      tmp = {
+        __type: "Pointer",
+        className: "Game",
+        objectId: el.game.objectId
+      };
+      return gamePointers.push(tmp);
+    });
+    return Parse.Promise.when(loadGames()).then(function(results) {
       _.each(results, function(game) {
-        return manifest.push(game);
+        return manifest.push(game.toJSON());
       });
-      console.log(manifest);
       console.log("loadGames complete");
-      return $.when(loadPlayers()).then(function(results) {
-        console.log("loadPlayers complete");
-        return console.log(manifest);
+      return Parse.Promise.when(loadRounds()).then(function(rounds) {
+        payload.rounds = [];
+        _.each(rounds, function(round) {
+          return payload.rounds.push(round.toJSON());
+        });
+        console.log("loadRounds complete");
+        return Parse.Promise.when(loadMoves()).then(function(moves) {
+          payload.moves = [];
+          _.each(moves, function(move) {
+            return payload.moves.push(move.toJSON());
+          });
+          console.log("loadMoves complete");
+          return Parse.Promise.when(mergeRoundsAndMoves()).then(function(data) {
+            console.log("round and move merge complete");
+            return Parse.Promise.when(loadPlayers()).then(function(results) {
+              return console.log("loadPlayers complete");
+            });
+          });
+        });
       });
     });
   });
 };
 
 getGamesList = function() {
-  var fixtureData;
+  var ggl_promise, pQuery;
   console.log("Fetching games...");
-  fixtureData = [
-    {
-      "game": {
-        "__type": "Pointer",
-        "className": "Game",
-        "objectId": "zpWR6UtdK3"
-      },
-      "player": {
-        "__type": "Pointer",
-        "className": "_User",
-        "objectId": "C21b7TAQBB"
-      },
-      "accepted": true,
-      "createdAt": "2013-07-27T21:25:06.079Z",
-      "updatedAt": "2013-07-27T21:25:06.524Z",
-      "objectId": "IvAJmISUmL",
-      "ACL": {
-        "C21b7TAQBB": {
-          "read": true,
-          "write": true
-        },
-        "*": {
-          "read": true
-        }
-      }
-    }, {
-      "game": {
-        "__type": "Pointer",
-        "className": "Game",
-        "objectId": "dGR7HZeJqh"
-      },
-      "player": {
-        "__type": "Pointer",
-        "className": "_User",
-        "objectId": "C21b7TAQBB"
-      },
-      "accepted": true,
-      "createdAt": "2013-07-27T21:09:42.847Z",
-      "updatedAt": "2013-07-27T21:09:43.076Z",
-      "objectId": "vCswqNVXjz",
-      "ACL": {
-        "C21b7TAQBB": {
-          "read": true,
-          "write": true
-        },
-        "*": {
-          "read": true
-        }
-      }
+  ggl_promise = new Parse.Promise();
+  pQuery = new Parse.Query(models.Player);
+  pQuery.equalTo("player", currentUser);
+  return pQuery.find({
+    success: function(results) {
+      _.each(results, function(game) {
+        return gamesList.push(game.toJSON());
+      });
+      return ggl_promise.resolve(results);
+    },
+    error: function(error) {
+      response.error(error.code + ":" + error.message);
+      return ggl_promise.reject(error);
     }
-  ];
-  return fixtureData;
+  });
 };
 
 loadGames = function() {
-  var fixtureData;
+  var lg_promise, query;
   console.log("loadGames");
-  fixtureData = [
-    {
-      "initiator": {
-        "__type": "Pointer",
-        "className": "_User",
-        "objectId": "C21b7TAQBB"
-      },
-      "active": true,
-      "current_round": 1,
-      "total_points": 0,
-      "type": "one-on-one",
-      "ACL": {
-        "C21b7TAQBB": {
-          "read": true,
-          "write": true
-        }
-      },
-      "objectId": "dGR7HZeJqh",
-      "createdAt": "2013-07-27T21:09:39.887Z",
-      "updatedAt": "2013-07-27T21:09:40.530Z",
-      "__type": "Object",
-      "className": "Game"
-    }, {
-      "initiator": {
-        "__type": "Pointer",
-        "className": "_User",
-        "objectId": "C21b7TAQBB"
-      },
-      "active": true,
-      "current_round": 1,
-      "total_points": 0,
-      "type": "one-on-one",
-      "ACL": {
-        "C21b7TAQBB": {
-          "read": true,
-          "write": true
-        }
-      },
-      "objectId": "zpWR6UtdK3",
-      "createdAt": "2013-07-27T21:25:00.075Z",
-      "updatedAt": "2013-07-27T21:25:00.715Z",
-      "__type": "Object",
-      "className": "Game"
+  lg_promise = new Parse.Promise();
+  gameIds = [];
+  _.map(gamesList, function(el) {
+    return gameIds.push(el.game.objectId);
+  });
+  query = new Parse.Query(models.Game);
+  query.containedIn("objectId", gameIds);
+  return query.find({
+    success: function(results) {
+      console.log("> loadGames success...");
+      return lg_promise.resolve(results);
+    },
+    error: function(error) {
+      return lg_promise.reject(error);
     }
-  ];
-  return fixtureData;
+  });
 };
 
 loadPlayers = function() {
-  var gamePointers, query;
-  console.log("loadPlayers");
+  var lp_promise, query;
+  console.log("loading players ...");
+  lp_promise = new Parse.Promise();
   query = new Parse.Query(models.Player);
-  gamePointers = [];
-  _.map(gamesList, function(el) {
-    var tmp;
-    tmp = {
-      __type: "Pointer",
-      className: "Game",
-      objectId: el.get("game").toJSON().objectId
-    };
-    return gamePointers.push(tmp);
-  });
   query.containedIn("game", gamePointers);
+  query.include("player");
   return query.find({
     success: function(results) {
+      console.log("players fetched");
+      console.log(results);
       return Parse.Promise.when(mergePlayerData(results)).then(function(results) {
-        return results;
+        return lp_promise.resolve(results);
       });
     }
   });
 };
 
 mergePlayerData = function(data) {
-  var tmp;
+  var counter, mpd_promise, tmp;
+  mpd_promise = new Parse.Promise();
   console.log("merging player data");
   tmp = {};
   _.each(data, function(player, i) {
-    console.log("creating tmp table");
-    if (tmp[player.get("game").toJSON().objectId] === void 0) {
-      tmp[player.get("game").toJSON().objectId] = [];
+    var game_id;
+    game_id = player.get("game").toJSON().objectId;
+    if (tmp[game_id] === void 0) {
+      tmp[game_id] = [];
     }
-    return tmp[player.get("game").toJSON().objectId].push(player);
+    return tmp[game_id].push(player.toJSON());
   });
+  counter = 1;
   _.each(manifest, function(game, index) {
-    console.log("game loop");
-    game = game.toJSON();
     manifest[index]['players'] = [];
     if (tmp[game.objectId]) {
-      console.log("adding to manifest");
-      return manifest[0].kyle = "fun";
+      manifest[index].players = tmp[game.objectId];
+    }
+    if (counter === manifest.length) {
+      console.log("> merging player success ....");
+      return mpd_promise.resolve(manifest);
+    } else {
+      return counter++;
     }
   });
-  console.log("calling true");
-  return true;
+  return mpd_promise;
 };
 
-getRounds = function() {
-  var Round;
+loadRounds = function() {
+  var lr_promise, query;
   console.log("Fetching rounds...");
-  console.log(payload);
-  Round = Parse.Object.extend("Round");
-  return _.each(payload, function(game, index) {
-    var query;
-    console.log(index);
-    query = new Parse.Query(Round);
-    query.equalTo("game", game);
-    return query.find({
-      success: function(game, rounds) {},
-      error: function(error) {
-        console.log("> Error");
-        return console.log(error);
-      }
-    });
+  lr_promise = new Parse.Promise();
+  query = new Parse.Query(models.Round);
+  query.containedIn("game", gamePointers);
+  return query.find({
+    success: function(results) {
+      console.log("> loadRounds success....");
+      return lr_promise.resolve(results);
+    },
+    error: function(error) {
+      return lr_promise.reject(error);
+    }
   });
+};
+
+loadMoves = function() {
+  var lm_promise, query, roundPointers;
+  lm_promise = new Parse.Promise();
+  console.log("Fetching moves...");
+  roundPointers = [];
+  _.each(payload.rounds, function(el) {
+    var tmp;
+    tmp = {
+      __type: "Pointer",
+      className: "Round",
+      objectId: el.objectId
+    };
+    return roundPointers.push(tmp);
+  });
+  query = new Parse.Query(models.Move);
+  query.containedIn("round", roundPointers);
+  return query.find({
+    success: function(results) {
+      console.log("> loadMoves success ....");
+      return lm_promise.resolve(results);
+    },
+    error: function(error) {
+      return lm_promise.reject(error);
+    }
+  });
+};
+
+mergeRoundsAndMoves = function() {
+  var counter, mrm_promise, tmpMoves, tmpRounds;
+  console.log("merging rounds and moves");
+  mrm_promise = new Parse.Promise();
+  tmpRounds = {};
+  tmpMoves = {};
+  _.each(payload.moves, function(move, i) {
+    if (tmpMoves[move.round.objectId] === void 0) {
+      tmpMoves[move.round.objectId] = [];
+    }
+    return tmpMoves[move.round.objectId].push(move);
+  });
+  _.each(payload.rounds, function(round, i) {
+    var round_game_id;
+    console.log("creating tmpRounds table");
+    round_game_id = round.game.objectId;
+    if (tmpRounds[round_game_id] === void 0) {
+      tmpRounds[round_game_id] = [];
+    }
+    if (tmpMoves[round.objectId]) {
+      round.moves = tmpMoves[round.objectId];
+    }
+    return tmpRounds[round_game_id].push(round);
+  });
+  counter = 1;
+  _.each(manifest, function(game, index) {
+    manifest[index]['rounds'] = [];
+    if (tmpRounds[game.objectId]) {
+      console.log("adding to manifest");
+      manifest[index].rounds = tmpRounds[game.objectId];
+    }
+    if (counter === manifest.length) {
+      console.log("> merging success ....");
+      return mrm_promise.resolve({
+        test: true
+      });
+    } else {
+      return counter++;
+    }
+  });
+  return mrm_promise;
 };
 
 init();
