@@ -88,7 +88,7 @@ init = ->
 					payload.moves = []
 
 					_.each moves, (move) ->
-						payload.moves.push move.toJSON()
+						payload.moves.push move
 
 					console.log "loadMoves complete"
 					
@@ -190,7 +190,7 @@ loadPlayers = ->
 		success: (results) ->
 			console.log "players fetched"
 			console.log results
-
+			payload.players = results
 			# merge in the results
 			Parse.Promise.when(mergePlayerData(results)).then (results) ->
 				lp_promise.resolve(results)
@@ -215,7 +215,7 @@ mergePlayerData = (data) ->
 		if tmp[game_id] is undefined
 			tmp[game_id] = []
 
-		tmp[game_id].push player.toJSON()
+		tmp[game_id].push player
 
 	counter = 1
 
@@ -282,6 +282,7 @@ loadMoves = ->
 	# Now build the query.....
 	query = new Parse.Query(models.Move)
 	query.containedIn "round", roundPointers
+	query.include("media")
 
 	query.find
 		success: (results) ->
@@ -302,10 +303,10 @@ mergeRoundsAndMoves = ->
 
 	_.each payload.moves, (move, i) ->
 
-		if tmpMoves[move.round.objectId] is undefined
-			tmpMoves[move.round.objectId] = []
+		if tmpMoves[move.get("round").toJSON().objectId] is undefined
+			tmpMoves[move.get("round").toJSON().objectId] = []
 
-		tmpMoves[move.round.objectId].push move
+		tmpMoves[move.get("round").toJSON().objectId].push move
 
 	_.each payload.rounds, (round, i) ->
 		console.log "creating tmpRounds table"
@@ -319,8 +320,6 @@ mergeRoundsAndMoves = ->
 			round.moves = tmpMoves[round.objectId]
 
 		tmpRounds[round_game_id].push round
-
-
 
 	counter = 1
 

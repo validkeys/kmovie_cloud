@@ -49,7 +49,7 @@ init = function() {
         return Parse.Promise.when(loadMoves()).then(function(moves) {
           payload.moves = [];
           _.each(moves, function(move) {
-            return payload.moves.push(move.toJSON());
+            return payload.moves.push(move);
           });
           console.log("loadMoves complete");
           return Parse.Promise.when(mergeRoundsAndMoves()).then(function(data) {
@@ -116,6 +116,7 @@ loadPlayers = function() {
     success: function(results) {
       console.log("players fetched");
       console.log(results);
+      payload.players = results;
       return Parse.Promise.when(mergePlayerData(results)).then(function(results) {
         return lp_promise.resolve(results);
       });
@@ -134,7 +135,7 @@ mergePlayerData = function(data) {
     if (tmp[game_id] === void 0) {
       tmp[game_id] = [];
     }
-    return tmp[game_id].push(player.toJSON());
+    return tmp[game_id].push(player);
   });
   counter = 1;
   _.each(manifest, function(game, index) {
@@ -185,6 +186,7 @@ loadMoves = function() {
   });
   query = new Parse.Query(models.Move);
   query.containedIn("round", roundPointers);
+  query.include("media");
   return query.find({
     success: function(results) {
       console.log("> loadMoves success ....");
@@ -203,10 +205,10 @@ mergeRoundsAndMoves = function() {
   tmpRounds = {};
   tmpMoves = {};
   _.each(payload.moves, function(move, i) {
-    if (tmpMoves[move.round.objectId] === void 0) {
-      tmpMoves[move.round.objectId] = [];
+    if (tmpMoves[move.get("round").toJSON().objectId] === void 0) {
+      tmpMoves[move.get("round").toJSON().objectId] = [];
     }
-    return tmpMoves[move.round.objectId].push(move);
+    return tmpMoves[move.get("round").toJSON().objectId].push(move);
   });
   _.each(payload.rounds, function(round, i) {
     var round_game_id;
