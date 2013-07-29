@@ -37,8 +37,11 @@ module.exports = (grunt) ->
 			# 	livereload: true
 
 			scripts:
-					files: "./coffee/**/*.coffee"
+					files: ["!./coffee/manifest/*.coffee","./coffee/**/*.coffee"]
 					tasks: ["clean","coffee","copy"]
+			manifest:
+					files: "./coffee/manifest/*.coffee"
+					tasks: ["coffee:manifest"]
 
 
 
@@ -49,9 +52,15 @@ module.exports = (grunt) ->
 			compile:
 				expand: true
 				cwd: "./coffee"
-				src: ["**/*.coffee"]
+				src: ["**/*.coffee","!manifest/*.coffee"]
 				dest: "./tmp"
 				ext: ".js"
+			manifest:
+				expand: true
+				cwd: './coffee'
+				src: ["manifest/*.coffee"]
+				dest: './public'
+				ext: '.js'
 
 		clean:
 			tmpcss: ["./tmp/"]
