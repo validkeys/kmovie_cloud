@@ -7,6 +7,7 @@ _ = require 'underscore'
 
 require 'cloud/games/triggers/triggers.js'
 require 'cloud/games/oneonone/create.js'
+require 'cloud/games/general/list.js'
 
 
 # // ++++++++++++++++++

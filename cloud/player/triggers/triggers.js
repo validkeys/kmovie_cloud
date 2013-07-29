@@ -4,6 +4,9 @@ _ = require('underscore');
 
 Parse.Cloud.beforeSave("Player", function(request, response) {
   var Player, checkForComplete, complete, errors, key, query;
+  console.log("*********************************");
+  console.log("Player::beforeSave");
+  console.log("*********************************");
   errors = false;
   complete = {
     player_unique: false
@@ -25,7 +28,7 @@ Parse.Cloud.beforeSave("Player", function(request, response) {
     query = new Parse.Query(Player);
     query.equalTo("player", request.object.get("player"));
     query.equalTo("game", request.object.get("game"));
-    return query.first({
+    query.first({
       success: function(object) {
         if (object === void 0 || object.length === 0) {
           complete.player_unique = true;
@@ -45,44 +48,39 @@ Parse.Cloud.beforeSave("Player", function(request, response) {
     for (key in complete) {
       complete[key] = true;
     }
-    return checkForComplete();
+    checkForComplete();
   }
+  return console.log("vvvvvvvvvvv\n\n");
 });
 
 Parse.Cloud.afterSave("Player", function(request) {
-  var Game, player, query,
+  var Game, query,
     _this = this;
   if (request.object.existed() === false) {
-    player = request.object;
+    this.player = request.object;
     Game = Parse.Object.extend("Game");
     query = new Parse.Query(Game);
-    query.equalTo("objectId", player.get("game").objectId);
-    query.select("initiator");
+    query.equalTo("objectId", this.player.get("game").objectId);
     return query.first({
-      success: function(game) {
-        var groupACL, relation, user, userObj, user_relation;
+      success: function(initiatorGame) {
+        var groupACL;
+        console.log("\n\n > Setting ACLs for player\n\n");
         groupACL = new Parse.ACL();
         groupACL.setReadAccess(request.object.get("player"), true);
         groupACL.setWriteAccess(request.object.get("player"), true);
-        groupACL.setReadAccess(game.get("initiator"), true);
-        groupACL.setWriteAccess(game.get("initiator"), true);
+        groupACL.setReadAccess(initiatorGame.get("initiator"), true);
+        groupACL.setWriteAccess(initiatorGame.get("initiator"), true);
         groupACL.setPublicReadAccess(true);
-        player.setACL(groupACL);
-        player.save();
-        relation = game.relation("players");
-        relation.add(player);
-        game.save();
-        userObj = Parse.Object.extend("_User");
-        user = new userObj();
-        user.set("objectId", player.toJSON().player.objectId);
-        user_relation = user.relation("games");
-        user_relation.add(game);
-        return user.save();
+        _this.player.setACL(groupACL);
+        return _this.player.save();
       },
       error: function(error) {
         console.log("\n\n ERROR finding game initiator: " + error.code + " : " + error.message);
         return console.log("Player objectId: " + player.get("objectId"));
       }
     });
+  } else {
+    console.log("Player not new ... >");
+    return console.log(request);
   }
 });

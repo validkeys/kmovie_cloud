@@ -9,6 +9,10 @@ _ = require 'underscore'
 
 Parse.Cloud.beforeSave "Player", (request, response) ->
 
+	console.log "*********************************"
+	console.log "Player::beforeSave"
+	console.log "*********************************"
+
 	errors = false
 
 	complete =
@@ -54,10 +58,13 @@ Parse.Cloud.beforeSave "Player", (request, response) ->
 				checkForComplete()
 
 	else
+
 		for key of complete
 			complete[key] = true
 
 		checkForComplete()
+
+	console.log "vvvvvvvvvvv\n\n"
 
 
 
@@ -69,7 +76,7 @@ Parse.Cloud.afterSave "Player", (request) ->
 
 	if request.object.existed() is false
 
-		player = request.object
+		@player = request.object
 
 
 		# ------------------
@@ -81,55 +88,35 @@ Parse.Cloud.afterSave "Player", (request) ->
 		Game = Parse.Object.extend("Game")
 		query = new Parse.Query(Game)
 
-		query.equalTo "objectId", player.get("game").objectId
-		query.select "initiator"
+		query.equalTo "objectId", @player.get("game").objectId
+		# query.select "initiator"
 
 
 
 		query.first
-			success: (game) =>
+			success: (initiatorGame) =>
 
-				# SET ACLS
+
+				# SET ACLSs
+				console.log "\n\n > Setting ACLs for player\n\n"
 				groupACL = new Parse.ACL()
 				groupACL.setReadAccess request.object.get("player"), true
 				groupACL.setWriteAccess request.object.get("player"), true
-				groupACL.setReadAccess game.get("initiator"), true
-				groupACL.setWriteAccess game.get("initiator"), true
+				groupACL.setReadAccess initiatorGame.get("initiator"), true
+				groupACL.setWriteAccess initiatorGame.get("initiator"), true
 
 				groupACL.setPublicReadAccess(true)
 
-				player.setACL groupACL
-				player.save()		
-
-
-				# ---------------------------
-				# ADD PLAYER RELATION TO GAME
-				# ---------------------------
-
-				relation = game.relation("players")
-				relation.add(player)
-				game.save()
-
-
-				# ---------------------------
-				# ADD GAME RELATION TO PLAYER USER
-				# ---------------------------
-				# console.log "=============================="
-				# console.log "Game relation..."
-				# console.log "---------------------"
-				# console.log player
-				# console.log "-----------------------"
-				# console.log player.toJSON().player.objectId
-				# console.log "=============================="
-				userObj = Parse.Object.extend("_User")
-				user = new userObj()
-				user.set "objectId", player.toJSON().player.objectId
-				user_relation = user.relation("games")
-				user_relation.add(game)
-				user.save()
+				@player.setACL groupACL
+				@player.save()		
 
 
 			error: (error) ->
 				console.log "\n\n ERROR finding game initiator: " + error.code + " : " + error.message
 				console.log "Player objectId: " + player.get("objectId")
+
+	else
+
+		console.log "Player not new ... >"
+		console.log request
 

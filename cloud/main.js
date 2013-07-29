@@ -8,6 +8,8 @@ require('cloud/games/triggers/triggers.js');
 
 require('cloud/games/oneonone/create.js');
 
+require('cloud/games/general/list.js');
+
 require('cloud/round/triggers/triggers.js');
 
 require('cloud/media/triggers/triggers.js');
