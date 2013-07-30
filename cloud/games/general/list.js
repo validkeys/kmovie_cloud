@@ -167,6 +167,7 @@ Parse.Cloud.define("listGames", function(request, response) {
     query = new Parse.Query(models.Move);
     query.containedIn("round", roundPointers);
     query.include("media");
+    query.include("user");
     return query.find({
       success: function(results) {
         console.log("> loadMoves success ....");

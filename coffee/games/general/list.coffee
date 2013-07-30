@@ -309,6 +309,7 @@ Parse.Cloud.define "listGames", (request, response) ->
 		query = new Parse.Query(models.Move)
 		query.containedIn "round", roundPointers
 		query.include("media")
+		query.include("user")
 
 		query.find
 			success: (results) ->
