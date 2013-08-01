@@ -17,6 +17,9 @@ Parse.Cloud.define("listGames", function(request, response) {
     models.Round = Parse.Object.extend("Round");
     models.Move = Parse.Object.extend("Move");
     return Parse.Promise.when(getGamesList()).then(function(results) {
+      if (results.length === 0) {
+        response.success("");
+      }
       _.each(gamesList, function(el) {
         var tmp;
         tmp = {

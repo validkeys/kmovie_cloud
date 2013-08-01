@@ -41,6 +41,10 @@ Parse.Cloud.define "listGames", (request, response) ->
 		# ---------------
 
 		Parse.Promise.when(getGamesList()).then (results) ->
+
+			if results.length is 0
+				response.success("")
+
 			_.each gamesList, (el) ->
 				tmp =
 					__type: "Pointer"
