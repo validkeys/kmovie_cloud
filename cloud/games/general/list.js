@@ -4,7 +4,7 @@ _ = require('underscore');
 
 Parse.Cloud.define("listGames", function(request, response) {
   var currentUser, gameIds, gamePointers, gamesList, getGamesList, init, loadGames, loadMoves, loadPlayers, loadRounds, manifest, mergePlayerData, mergeRoundsAndMoves, models, payload;
-  currentUser = request.params.user;
+  currentUser = {};
   models = {};
   gamesList = [];
   gameIds = [];
@@ -16,6 +16,8 @@ Parse.Cloud.define("listGames", function(request, response) {
     models.Game = Parse.Object.extend("Game");
     models.Round = Parse.Object.extend("Round");
     models.Move = Parse.Object.extend("Move");
+    models.User = Parse.Object.extend("_User");
+    currentUser = new models.User(request.params.user.toJSON());
     return Parse.Promise.when(getGamesList()).then(function(results) {
       if (results.length === 0) {
         response.success("");

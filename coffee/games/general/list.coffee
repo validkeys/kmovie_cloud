@@ -2,8 +2,7 @@ _ = require 'underscore'
 
 Parse.Cloud.define "listGames", (request, response) ->
 
-
-	currentUser = request.params.user
+	currentUser = {}
 	
 	models 		= {}
 	gamesList 	= []
@@ -34,6 +33,15 @@ Parse.Cloud.define "listGames", (request, response) ->
 		models.Game 	= Parse.Object.extend("Game")
 		models.Round 	= Parse.Object.extend("Round")
 		models.Move 	= Parse.Object.extend("Move")
+		models.User 	= Parse.Object.extend("_User")
+
+
+		# -------------
+		# Current User
+		# -------------
+		
+		currentUser = new models.User(request.params.user.toJSON())
+	
 
 
 		# ---------------
@@ -124,7 +132,7 @@ Parse.Cloud.define "listGames", (request, response) ->
 		# --------
 
 		# Get the list of games where the current user is a player
-		ggl_promise = new Parse.Promise()
+		ggl_promise 	= new Parse.Promise()
 		pQuery 			= new Parse.Query(models.Player)
 
 		pQuery.equalTo "player", currentUser
