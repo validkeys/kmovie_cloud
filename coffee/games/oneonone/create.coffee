@@ -63,9 +63,9 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 						media = new objs.Media(media_data)
 						media.set("imported", false)
 
-						console.log "\n\n=========================\n\n"
-						console.log media.toJSON()
-						console.log "\n\n=========================\n\n"
+						# console.log "\n\n=========================\n\n"
+						# console.log media.toJSON()
+						# console.log "\n\n=========================\n\n"
 
 						media.save null,
 							success: (media) ->
@@ -75,11 +75,11 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 								# This is a hack but it's late
 								# fuck...
 								if i is -1
-									console.log "Calling saveMoves..."
+									# console.log "Calling saveMoves..."
 									saveMoves()
 
 							error: (error) ->
-								console.log "Media not created"
+								# console.log "Media not created"
 								response.error error
 								false
 
@@ -90,7 +90,7 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 						# This is a hack but it's late
 						# fuck...
 						if i is -1
-							console.log "Calling saveMoves..."
+							# console.log "Calling saveMoves..."
 							saveMoves()
 
 				error: (error) ->
@@ -121,7 +121,6 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 	saveGame = ->
 		instances.round.save null,
 			success: (round) ->
-				console.log "saved game and round"
 				success.game = true
 				savePlayers()
 				complete.game = true
@@ -133,10 +132,10 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 				checkForSuccess()
 
 	savePlayers = ->
-		console.log "Saving " + instances.playersToSave.length + " players"
+		# console.log "Saving " + instances.playersToSave.length + " players"
 		Parse.Object.saveAll instances.playersToSave,
 			success: (obj) ->
-				console.log "Players Saved..."
+				# console.log "Players Saved..."
 				success.players = true
 				complete.players = true
 				checkForSuccess()
@@ -148,11 +147,11 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 				checkForSuccess()
 
 	saveMoves = ->
-		console.log "Saving " + instances.movesToSave.length + " moves"
+		# console.log "Saving " + instances.movesToSave.length + " moves"
 		Parse.Object.saveAll instances.movesToSave,
 			success: (obj) ->
 				success.move = true
-				console.log "Moves Saved..."
+				# console.log "Moves Saved..."
 				complete.move = true
 				checkForSuccess()
 
@@ -172,11 +171,29 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 			for key of success
 				allSuccessful = false  if success[key] is false
 			if allSuccessful is true
-				response.success "Your game was created"
+
+				requestData =
+					game:
+						objectId: instances.game.toJSON().objectId
+						__type: "Pointer"
+						className: "Game"
+					user:
+						objectId: instances.game.get("initiator").toJSON().objectId
+						__type: "Pointer"
+						className: "_User"
+
+				
+				# Now call the manifest
+				Parse.Cloud.run("listGames", requestData,
+					success: (results) ->
+						response.success(results)
+					error: (error) ->
+						response.error "There was a problem retrieving this games manifest"
+						throw "listGames error on new game create"
+				)
+
 			else
 				response.error "There was a problem creating your game"
-		else
-			console.log "Still waiting..."
 	
 	# Helpers ->
 	returnMediaPointer = (result) ->
@@ -189,12 +206,9 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 			className: "Media"
 			objectId: id
 
-		console.log "\n\n-----------------"
-		console.log pointer
-		console.log "\n\n-----------------"
 		pointer
+
 	triggerCallback = (callback, data) ->
-		console.log "Triger..."
 		callback.call data
 
 	objs = {}

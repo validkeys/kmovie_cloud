@@ -2,6 +2,9 @@ _ = require 'underscore'
 
 Parse.Cloud.define "listGames", (request, response) ->
 
+	console.log "\n\n Request: \n\n"
+	console.log request
+
 	currentUser = {}
 	
 	models 		= {}
@@ -133,22 +136,62 @@ Parse.Cloud.define "listGames", (request, response) ->
 
 		# Get the list of games where the current user is a player
 		ggl_promise 	= new Parse.Promise()
-		pQuery 			= new Parse.Query(models.Player)
 
-		pQuery.equalTo "player", currentUser
 
-		pQuery.find
-			success: (results) ->
-				# gamesList = results
-				_.each results, (game) ->
-					gamesList.push game.toJSON()
 
-				ggl_promise.resolve(results)
-				# results
-			error: (error) ->
-				response.error(error.code + ":" + error.message)
-				ggl_promise.reject(error)
-				# error
+		if request.params.game?
+			tmp = request.params.game.toJSON()
+			objectId = tmp.objectId
+
+			pQuery = new Parse.Query(models.Game)
+			pQuery.equalTo "objectId", objectId
+
+			console.log "FUCK ID: " + objectId
+
+			pQuery.find
+				success: (results) ->
+
+					console.log "FUCK COUNT: " + results.length
+					console.log objectId
+
+					# gamesList = results
+					_.each results, (game) ->
+
+
+						tmp = {
+							game: game.toJSON()
+						}
+
+						gamesList.push tmp
+
+					ggl_promise.resolve(results)
+					# results
+				error: (error) ->
+					response.error(error.code + ":" + error.message)
+					ggl_promise.reject(error)
+
+
+		else
+
+			pQuery 			= new Parse.Query(models.Player)
+			pQuery.equalTo "player", currentUser
+
+
+			pQuery.find
+				success: (results) ->
+
+					# gamesList = results
+					_.each results, (game) ->
+						gamesList.push game.toJSON()
+
+					ggl_promise.resolve(results)
+					# results
+				error: (error) ->
+					response.error(error.code + ":" + error.message)
+					ggl_promise.reject(error)
+					# error
+					# 
+		ggl_promise
 
 	loadGames = ->
 		lg_promise = new Parse.Promise()
@@ -181,7 +224,7 @@ Parse.Cloud.define "listGames", (request, response) ->
 		
 
 
-
+		lg_promise
 
 
 	# --------------
@@ -209,14 +252,14 @@ Parse.Cloud.define "listGames", (request, response) ->
 		query.find
 			success: (results) ->
 				console.log "players fetched"
-				console.log results
+				# console.log results
 				payload.players = results
 				# merge in the results
 				Parse.Promise.when(mergePlayerData(results)).then (results) ->
 					lp_promise.resolve(results)
 
 
-
+		lp_promise
 
 	mergePlayerData = (data) ->
 
@@ -285,6 +328,7 @@ Parse.Cloud.define "listGames", (request, response) ->
 			error: (error) ->
 				lr_promise.reject error
 
+		lr_promise
 
 
 
@@ -330,6 +374,8 @@ Parse.Cloud.define "listGames", (request, response) ->
 			error: (error) ->
 				lm_promise.reject error
 
+
+		lm_promise
 
 
 

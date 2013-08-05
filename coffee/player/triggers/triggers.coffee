@@ -9,9 +9,9 @@ _ = require 'underscore'
 
 Parse.Cloud.beforeSave "Player", (request, response) ->
 
-	console.log "*********************************"
-	console.log "Player::beforeSave"
-	console.log "*********************************"
+	# console.log "*********************************"
+	# console.log "Player::beforeSave"
+	# console.log "*********************************"
 
 	errors = false
 
@@ -64,7 +64,7 @@ Parse.Cloud.beforeSave "Player", (request, response) ->
 
 		checkForComplete()
 
-	console.log "vvvvvvvvvvv\n\n"
+	# console.log "vvvvvvvvvvv\n\n"
 
 
 
@@ -98,7 +98,7 @@ Parse.Cloud.afterSave "Player", (request) ->
 
 
 				# SET ACLSs
-				console.log "\n\n > Setting ACLs for player\n\n"
+				# console.log "\n\n > Setting ACLs for player\n\n"
 				groupACL = new Parse.ACL()
 				groupACL.setReadAccess request.object.get("player"), true
 				groupACL.setWriteAccess request.object.get("player"), true

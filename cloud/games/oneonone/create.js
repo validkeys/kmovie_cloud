@@ -36,20 +36,15 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
           if (results === undefined || results.length === 0) {
             media = new objs.Media(media_data);
             media.set("imported", false);
-            console.log("\n\n=========================\n\n");
-            console.log(media.toJSON());
-            console.log("\n\n=========================\n\n");
             return media.save(null, {
               success: function(media) {
                 m.set("media", returnMediaPointer(media));
                 instances.movesToSave.push(m);
                 if (i === -1) {
-                  console.log("Calling saveMoves...");
                   return saveMoves();
                 }
               },
               error: function(error) {
-                console.log("Media not created");
                 response.error(error);
                 return false;
               }
@@ -58,7 +53,6 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
             m.set("media", returnMediaPointer(results));
             instances.movesToSave.push(m);
             if (i === -1) {
-              console.log("Calling saveMoves...");
               return saveMoves();
             }
           }
@@ -89,7 +83,6 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
   saveGame = function() {
     return instances.round.save(null, {
       success: function(round) {
-        console.log("saved game and round");
         success.game = true;
         savePlayers();
         complete.game = true;
@@ -103,10 +96,8 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
     });
   };
   savePlayers = function() {
-    console.log("Saving " + instances.playersToSave.length + " players");
     return Parse.Object.saveAll(instances.playersToSave, {
       success: function(obj) {
-        console.log("Players Saved...");
         success.players = true;
         complete.players = true;
         return checkForSuccess();
@@ -120,11 +111,9 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
     });
   };
   saveMoves = function() {
-    console.log("Saving " + instances.movesToSave.length + " moves");
     return Parse.Object.saveAll(instances.movesToSave, {
       success: function(obj) {
         success.move = true;
-        console.log("Moves Saved...");
         complete.move = true;
         return checkForSuccess();
       },
@@ -137,7 +126,7 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
     });
   };
   checkForSuccess = function() {
-    var allDone, allSuccessful, key;
+    var allDone, allSuccessful, key, requestData;
     allDone = true;
     allSuccessful = true;
     for (key in complete) {
@@ -153,12 +142,30 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
         }
       }
       if (allSuccessful === true) {
-        return response.success("Your game was created");
+        requestData = {
+          game: {
+            objectId: instances.game.toJSON().objectId,
+            __type: "Pointer",
+            className: "Game"
+          },
+          user: {
+            objectId: instances.game.get("initiator").toJSON().objectId,
+            __type: "Pointer",
+            className: "_User"
+          }
+        };
+        return Parse.Cloud.run("listGames", requestData, {
+          success: function(results) {
+            return response.success(results);
+          },
+          error: function(error) {
+            response.error("There was a problem retrieving this games manifest");
+            throw "listGames error on new game create";
+          }
+        });
       } else {
         return response.error("There was a problem creating your game");
       }
-    } else {
-      return console.log("Still waiting...");
     }
   };
   returnMediaPointer = function(result) {
@@ -173,13 +180,9 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
       className: "Media",
       objectId: id
     };
-    console.log("\n\n-----------------");
-    console.log(pointer);
-    console.log("\n\n-----------------");
     return pointer;
   };
   triggerCallback = function(callback, data) {
-    console.log("Triger...");
     return callback.call(data);
   };
   objs = {};

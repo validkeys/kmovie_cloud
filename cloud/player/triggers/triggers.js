@@ -4,9 +4,6 @@ _ = require('underscore');
 
 Parse.Cloud.beforeSave("Player", function(request, response) {
   var Player, checkForComplete, complete, errors, key, query;
-  console.log("*********************************");
-  console.log("Player::beforeSave");
-  console.log("*********************************");
   errors = false;
   complete = {
     player_unique: false
@@ -28,7 +25,7 @@ Parse.Cloud.beforeSave("Player", function(request, response) {
     query = new Parse.Query(Player);
     query.equalTo("player", request.object.get("player"));
     query.equalTo("game", request.object.get("game"));
-    query.first({
+    return query.first({
       success: function(object) {
         if (object === void 0 || object.length === 0) {
           complete.player_unique = true;
@@ -48,9 +45,8 @@ Parse.Cloud.beforeSave("Player", function(request, response) {
     for (key in complete) {
       complete[key] = true;
     }
-    checkForComplete();
+    return checkForComplete();
   }
-  return console.log("vvvvvvvvvvv\n\n");
 });
 
 Parse.Cloud.afterSave("Player", function(request) {
@@ -64,7 +60,6 @@ Parse.Cloud.afterSave("Player", function(request) {
     return query.first({
       success: function(initiatorGame) {
         var groupACL;
-        console.log("\n\n > Setting ACLs for player\n\n");
         groupACL = new Parse.ACL();
         groupACL.setReadAccess(request.object.get("player"), true);
         groupACL.setWriteAccess(request.object.get("player"), true);

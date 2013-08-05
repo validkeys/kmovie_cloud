@@ -4,6 +4,8 @@ _ = require('underscore');
 
 Parse.Cloud.define("listGames", function(request, response) {
   var currentUser, gameIds, gamePointers, gamesList, getGamesList, init, loadGames, loadMoves, loadPlayers, loadRounds, manifest, mergePlayerData, mergeRoundsAndMoves, models, payload;
+  console.log("\n\n Request: \n\n");
+  console.log(request);
   currentUser = {};
   models = {};
   gamesList = [];
@@ -57,22 +59,48 @@ Parse.Cloud.define("listGames", function(request, response) {
     });
   };
   getGamesList = function() {
-    var ggl_promise, pQuery;
+    var ggl_promise, objectId, pQuery, tmp;
     ggl_promise = new Parse.Promise();
-    pQuery = new Parse.Query(models.Player);
-    pQuery.equalTo("player", currentUser);
-    return pQuery.find({
-      success: function(results) {
-        _.each(results, function(game) {
-          return gamesList.push(game.toJSON());
-        });
-        return ggl_promise.resolve(results);
-      },
-      error: function(error) {
-        response.error(error.code + ":" + error.message);
-        return ggl_promise.reject(error);
-      }
-    });
+    if (request.params.game != null) {
+      tmp = request.params.game.toJSON();
+      objectId = tmp.objectId;
+      pQuery = new Parse.Query(models.Game);
+      pQuery.equalTo("objectId", objectId);
+      console.log("FUCK ID: " + objectId);
+      pQuery.find({
+        success: function(results) {
+          console.log("FUCK COUNT: " + results.length);
+          console.log(objectId);
+          _.each(results, function(game) {
+            tmp = {
+              game: game.toJSON()
+            };
+            return gamesList.push(tmp);
+          });
+          return ggl_promise.resolve(results);
+        },
+        error: function(error) {
+          response.error(error.code + ":" + error.message);
+          return ggl_promise.reject(error);
+        }
+      });
+    } else {
+      pQuery = new Parse.Query(models.Player);
+      pQuery.equalTo("player", currentUser);
+      pQuery.find({
+        success: function(results) {
+          _.each(results, function(game) {
+            return gamesList.push(game.toJSON());
+          });
+          return ggl_promise.resolve(results);
+        },
+        error: function(error) {
+          response.error(error.code + ":" + error.message);
+          return ggl_promise.reject(error);
+        }
+      });
+    }
+    return ggl_promise;
   };
   loadGames = function() {
     var lg_promise, query;
@@ -83,7 +111,7 @@ Parse.Cloud.define("listGames", function(request, response) {
     });
     query = new Parse.Query(models.Game);
     query.containedIn("objectId", gameIds);
-    return query.find({
+    query.find({
       success: function(results) {
         console.log("> loadGames success...");
         return lg_promise.resolve(results);
@@ -92,6 +120,7 @@ Parse.Cloud.define("listGames", function(request, response) {
         return lg_promise.reject(error);
       }
     });
+    return lg_promise;
   };
   loadPlayers = function() {
     var lp_promise, query;
@@ -100,16 +129,16 @@ Parse.Cloud.define("listGames", function(request, response) {
     query = new Parse.Query(models.Player);
     query.containedIn("game", gamePointers);
     query.include("player");
-    return query.find({
+    query.find({
       success: function(results) {
         console.log("players fetched");
-        console.log(results);
         payload.players = results;
         return Parse.Promise.when(mergePlayerData(results)).then(function(results) {
           return lp_promise.resolve(results);
         });
       }
     });
+    return lp_promise;
   };
   mergePlayerData = function(data) {
     var counter, mpd_promise, tmp;
@@ -145,7 +174,7 @@ Parse.Cloud.define("listGames", function(request, response) {
     lr_promise = new Parse.Promise();
     query = new Parse.Query(models.Round);
     query.containedIn("game", gamePointers);
-    return query.find({
+    query.find({
       success: function(results) {
         console.log("> loadRounds success....");
         return lr_promise.resolve(results);
@@ -154,6 +183,7 @@ Parse.Cloud.define("listGames", function(request, response) {
         return lr_promise.reject(error);
       }
     });
+    return lr_promise;
   };
   loadMoves = function() {
     var lm_promise, query, roundPointers;
@@ -173,7 +203,7 @@ Parse.Cloud.define("listGames", function(request, response) {
     query.containedIn("round", roundPointers);
     query.include("media");
     query.include("user");
-    return query.find({
+    query.find({
       success: function(results) {
         console.log("> loadMoves success ....");
         return lm_promise.resolve(results);
@@ -182,6 +212,7 @@ Parse.Cloud.define("listGames", function(request, response) {
         return lm_promise.reject(error);
       }
     });
+    return lm_promise;
   };
   mergeRoundsAndMoves = function() {
     var counter, mrm_promise, tmpMoves, tmpRounds;
