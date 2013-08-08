@@ -12,6 +12,8 @@ require('cloud/games/general/list.js');
 
 require('cloud/round/triggers/triggers.js');
 
+require('cloud/media/general.js');
+
 require('cloud/media/triggers/triggers.js');
 
 require('cloud/move/triggers/triggers.js');
