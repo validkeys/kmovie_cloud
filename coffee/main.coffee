@@ -14,6 +14,7 @@ require 'cloud/games/general/list.js'
 # // ROUND REQUIRES
 # // ++++++++++++++++++
 
+require 'cloud/round/general.js'
 require 'cloud/round/triggers/triggers.js'
 
 

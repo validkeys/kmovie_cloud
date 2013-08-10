@@ -52,13 +52,12 @@ Parse.Cloud.afterSave("Move", function(request) {
   var groupACL, move;
   if (request.object.existed() === false) {
     move = request.object;
-    console.log("\n\n--------- ACL ------------");
-    console.log(move);
     groupACL = new Parse.ACL();
     groupACL.setReadAccess(move.get("user"), true);
     groupACL.setWriteAccess(move.get("user"), true);
     groupACL.setPublicReadAccess(true);
     move.setACL(groupACL);
-    return move.save();
+    move.save();
+    return Parse.Cloud.run("checkForNewRound", move);
   }
 });

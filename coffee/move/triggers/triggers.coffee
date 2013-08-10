@@ -68,9 +68,6 @@ Parse.Cloud.afterSave "Move", (request) ->
 
 		move = request.object
 
-		console.log "\n\n--------- ACL ------------"
-		console.log move
-
 		# SET ACLS
 		groupACL = new Parse.ACL()
 		groupACL.setReadAccess(move.get("user"), true)
@@ -79,3 +76,5 @@ Parse.Cloud.afterSave "Move", (request) ->
 
 		move.setACL groupACL
 		move.save()
+
+		Parse.Cloud.run "checkForNewRound", move
