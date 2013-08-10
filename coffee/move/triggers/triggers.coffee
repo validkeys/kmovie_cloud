@@ -77,4 +77,4 @@ Parse.Cloud.afterSave "Move", (request) ->
 		move.setACL groupACL
 		move.save()
 
-		Parse.Cloud.run "checkForNewRound", move
+		Parse.Cloud.run "checkForNewRound", request.object.toJSON()

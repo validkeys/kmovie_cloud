@@ -40,7 +40,9 @@ Parse.Cloud.afterSave("Round", function(request) {
         groupACL.setWriteAccess(initiator.get("initiator"), true);
         groupACL.setPublicReadAccess(true);
         round.setACL(groupACL);
-        return round.save();
+        round.save();
+        initiator.set("current_round", request.object.get("round_number"));
+        return initiator.save();
       },
       error: function(error) {
         console.log("\n\n ERROR finding game initiator in round afterSave: " + error.code + " : " + error.message);

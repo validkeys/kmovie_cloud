@@ -53,19 +53,20 @@ Parse.Cloud.define "mediaFindOrCreate", (request, response) ->
 
 Parse.Cloud.define "checkForNewRound", (request, response) ->
 
+		console.log "\n\n\n"
+		console.log "checking for new round .... "
+		console.log request
+		console.log "\n\n\n"
+
 		# if all game.players.length = round.moves.length
 		# create a new round
-		data = request.params.toJSON()
+		data = request.params
+
 
 		moves_num = 0
 		player_num = 0
 
 		round = data.round
-		roundPointer =
-			__type: "Pointer"
-			className: "Round"
-			objectId: round.objectId
-
 
 		# ----------------------------
 		# Find the number of moves
@@ -74,7 +75,7 @@ Parse.Cloud.define "checkForNewRound", (request, response) ->
 		Move = Parse.Object.extend "Move"
 		mQuery = new Parse.Query(Move)
 
-		mQuery.equalTo "round", roundPointer
+		mQuery.equalTo "round", round
 
 		mQuery.count
 			success: (num_moves) ->
@@ -82,55 +83,60 @@ Parse.Cloud.define "checkForNewRound", (request, response) ->
 				console.log "Theres are " + num_moves + " moves in this round"
 
 
-		# ----------------------------
-		# Find the number of players
-		# -----------------------------
-		
-		Round = Parse.Object.extend("Round")
-		checkRound = new Round({objectId: round.objectId}) 
+				# ----------------------------
+				# Find the number of players
+				# -----------------------------
+				
+				Round = Parse.Object.extend("Round")
+				checkRound = new Round({objectId: round.toJSON().objectId}) 
+				console.log "\nChecking for round: " + round.toJSON().objectId
 
-		checkRound.fetch
-			success: (data) ->
-				game = data.get("game")
+				checkRound.fetch
+					success: (data) ->
+						game = data.get("game")
 
-				Player = Parse.Object.extend("Player")
-				pQuery = new Parse.Query(Player)
-
-
-				pQuery.equalTo "game", game
-				pQuery.equalTo "accepted", true
-
-				pQuery.count
-					success: (player_count) ->
-						player_num = player_count
-						console.log "There are " + player_count + " players in this round"
-
-						if moves_num is player_num
+						Player = Parse.Object.extend("Player")
+						pQuery = new Parse.Query(Player)
 
 
-							Parse.Cloud.run "latestRound", {game: game.toJSON().objectId},
-								success: (results) ->
-									round_number = results.get("round_number")
+						pQuery.equalTo "game", game
 
-									# latest_round = 
+						pQuery.count
+							success: (player_count) ->
+								player_num = player_count
+								console.log "There are " + player_count + " players in this round"
 
-									newRound = new Round()
-
-									data =
-										game: game
-										round_number: round_number + 1
-
-									newRound.save data,
-										success: (result) ->
-											response.success(result)
-										error: (error) ->
-											throw "Error creating new round"
-											console.log error
+								if moves_num is player_num
 
 
-					error: (args...) ->
-						console.log "!ERROR!"
-						console.log args
+									Parse.Cloud.run "latestRound", {game: game.toJSON().objectId},
+										success: (results) ->
+											round_number = results.get("round_number")
+
+											# latest_round = 
+
+											newRound = new Round()
+
+											data =
+												game: game
+												round_number: round_number + 1
+
+											newRound.save data,
+												success: (result) ->
+													response.success(result)
+												error: (error) ->
+													throw "Error creating new round"
+													console.log error
+													response.error(error)
+								else
+
+									response.success("No need to create a new round")
+
+
+							error: (args...) ->
+								console.log "!ERROR!"
+								console.log args
+								response.error args
 
 
 

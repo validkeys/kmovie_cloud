@@ -97,8 +97,11 @@ Parse.Cloud.afterSave "Friend", (request) ->
 		success: (notification) ->
 			console.log "Notification created"
 
-		error: (error) ->
-			throw "Got an error" + error.code + " : " + error.message
+		error: (args...) ->
+			throw {
+				"error": "Friend afterSave (main.coffee)"
+				args: args
+			}
 
 	else
 

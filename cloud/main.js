@@ -1,4 +1,5 @@
-var moment, _;
+var moment, _,
+  __slice = [].slice;
 
 moment = require('moment');
 
@@ -75,8 +76,13 @@ Parse.Cloud.afterSave("Friend", function(request) {
       success: function(notification) {
         return console.log("Notification created");
       },
-      error: function(error) {
-        throw "Got an error" + error.code + " : " + error.message;
+      error: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        throw {
+          "error": "Friend afterSave (main.coffee)",
+          args: args
+        };
       }
     });
   } else {

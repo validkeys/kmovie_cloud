@@ -1,3 +1,5 @@
+var __slice = [].slice;
+
 Parse.Cloud.define("saveNewGame", function(request, response) {
   var checkForSuccess, complete, createGame, createMove, createPlayer, createRound, init, instances, objs, returnMediaPointer, saveGame, saveMoves, savePlayers, success, triggerCallback;
   init = function() {
@@ -88,8 +90,11 @@ Parse.Cloud.define("saveNewGame", function(request, response) {
         complete.game = true;
         return checkForSuccess();
       },
-      error: function(error) {
-        throw "Got an error " + error.code + " : " + error.message;
+      error: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        throw "Got an error saving the game";
+        console.log(args);
         complete.game = true;
         return checkForSuccess();
       }

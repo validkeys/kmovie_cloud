@@ -126,8 +126,9 @@ Parse.Cloud.define "saveNewGame", (request, response) ->
 				complete.game = true
 				checkForSuccess()
 
-			error: (error) ->
-				throw "Got an error " + error.code + " : " + error.message 
+			error: (args...) ->
+				throw "Got an error saving the game"
+				console.log args
 				complete.game = true
 				checkForSuccess()
 

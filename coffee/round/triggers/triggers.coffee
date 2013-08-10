@@ -61,7 +61,11 @@ Parse.Cloud.afterSave "Round", (request) ->
 				groupACL.setPublicReadAccess(true)
 
 				round.setACL groupACL
-				round.save()		
+				round.save()
+
+				# Update the current round of the game
+				initiator.set "current_round", request.object.get("round_number")
+				initiator.save()
 
 
 

@@ -58,6 +58,6 @@ Parse.Cloud.afterSave("Move", function(request) {
     groupACL.setPublicReadAccess(true);
     move.setACL(groupACL);
     move.save();
-    return Parse.Cloud.run("checkForNewRound", move);
+    return Parse.Cloud.run("checkForNewRound", request.object.toJSON());
   }
 });
